@@ -5,6 +5,7 @@ from transactions.sales import analyze_sales_by_month
 from transactions.sales import analyze_sales_by_tier
 from transactions.sales import analyze_sales_by_channel
 from transactions.clients import analyze_clients_by_region
+
 # 读取 transactions.csv 文件，保存成 pandas DataFrame
 df = pd.read_csv('transactions.csv')
 
@@ -19,17 +20,27 @@ process_methods = [
     # 在这里可以添加更多的处理方法
 ]
 
-# 用于存储所有处理结果的字典
-results = {}
+# 获取所有唯一的 addonKey
+addon_keys = df['addonKey'].unique()
 
-# 循环调用每个处理方法，并将结果存储在字典中
-for method_name, method in process_methods:
-    df_result = method(df)
-    results[method_name] = df_result
+# 按 addonKey 分组并分别处理
+for addon_key in addon_keys:
+    df_subset = df[df['addonKey'] == addon_key]
+    
+    # 用于存储所有处理结果的字典
+    results = {}
 
-# 将所有处理结果输出到一个 Excel 文件，每个结果作为一个 sheet
-with pd.ExcelWriter('transactions_report.xlsx', engine='openpyxl') as writer:
-    for sheet_name, result_df in results.items():
-        result_df.to_excel(writer, sheet_name=sheet_name, index=False)
+    # 循环调用每个处理方法，并将结果存储在字典中
+    for method_name, method in process_methods:
+        df_result = method(df_subset)
+        results[method_name] = df_result
 
-print("All processing done. Results saved to transactions_report.xlsx")
+    # 将所有处理结果输出到一个 Excel 文件，每个结果作为一个 sheet
+    output_file = f'transactions_report_{addon_key}.xlsx'
+    with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
+        for sheet_name, result_df in results.items():
+            result_df.to_excel(writer, sheet_name=sheet_name, index=False)
+    
+    print(f"Processing for addonKey {addon_key} done. Results saved to {output_file}")
+
+print("All processing done for all addonKeys.")

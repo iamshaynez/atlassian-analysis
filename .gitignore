@@ -161,4 +161,4 @@ cython_debug/
 
 
 transactions.csv
-transactions_report.xlsx
+transactions_report*.xlsx
